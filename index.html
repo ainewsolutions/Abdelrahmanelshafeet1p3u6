@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
@@ -513,6 +513,10 @@
                     <i class="fas fa-keyboard"></i>
                     <h3>Correct Sentences</h3>
                 </div>
+                <div class="game-card" onclick="startGame(6)">
+                    <i class="fas fa-pen-fancy"></i>
+                    <h3>Rewrite Sentences</h3>
+                </div>
             </div>
         </div>
 
@@ -537,7 +541,7 @@
 
             <!-- Game 5 Area (Rewrite) -->
             <div id="rewrite-area" style="display: none; text-align: center;">
-                <p class="rewrite-instruction">Rewrite the sentence correcting the word(s) in brackets:</p>
+                <p class="rewrite-instruction" id="rewrite-instruction-text">Rewrite the sentence correcting the word(s) in brackets:</p>
                 <div id="rewrite-bracket" style="font-size: 1.5rem; color: var(--primary); font-weight: bold; margin-bottom: 30px;"></div>
                 <input type="text" id="rewrite-input" placeholder="Type your answer here..." autocomplete="off">
                 <button id="btn-submit-rewrite" class="btn-back" style="background: var(--primary); box-shadow: 0 4px 0 #064e3b; margin: 20px auto; font-size: 1.3rem; padding: 15px 40px;" onclick="submitRewrite()">Submit</button>
@@ -613,11 +617,27 @@
             { q: "Nadia said, \"I left my phone at home.\"", bracket: "Correct the mistake / Rewrite", ans: ["Nadia said that she had left her phone at home", "Nadia said she had left her phone at home", "Nadia said that she had left her phone at home."] },
         ];
 
+        const rewriteSentencesTemplates = [
+            { q: "Ali said, \"I am hungry.\"", bracket: "reported speech", ans: ["Ali said that he was hungry", "Ali said he was hungry", "Ali said that he was hungry."] },
+            { q: "Mona said, \"I don't like tea.\"", bracket: "reported speech", ans: ["Mona said that she didn't like tea", "Mona said that she did not like tea", "Mona said she didn't like tea", "Mona said that she didn't like tea."] },
+            { q: "The boy said, \"I have lost my bag.\"", bracket: "reported speech", ans: ["The boy said that he had lost his bag", "The boy said he had lost his bag", "The boy said that he had lost his bag."] },
+            { q: "Sara said, \"I will help you tomorrow.\"", bracket: "reported speech", ans: ["Sara said that she would help me the next day", "Sara said she would help me the next day", "Sara said that she would help me the next day."] },
+            { q: "Omar said, \"I can play the piano.\"", bracket: "reported speech", ans: ["Omar said that he could play the piano", "Omar said he could play the piano", "Omar said that he could play the piano."] },
+            { q: "They said, \"We are studying for the test.\"", bracket: "reported speech", ans: ["They said that they were studying for the test", "They said they were studying for the test", "They said that they were studying for the test."] },
+            { q: "Laila said, \"I saw that movie yesterday.\"", bracket: "reported speech", ans: ["Laila said that she had seen that movie the day before", "Laila said she had seen that movie the day before", "Laila said that she had seen that movie the day before."] },
+            { q: "Hassan said, \"I don't have any money.\"", bracket: "reported speech", ans: ["Hassan said that he didn't have any money", "Hassan said that he did not have any money", "Hassan said he didn't have any money", "Hassan said that he didn't have any money."] },
+            { q: "The teacher said, \"Water boils at 100 degrees.\"", bracket: "reported speech", ans: ["The teacher said that water boils at 100 degrees", "The teacher said water boils at 100 degrees", "The teacher said that water boils at 100 degrees."] },
+            { q: "Nadia said, \"I am going to visit my grandmother.\"", bracket: "reported speech", ans: ["Nadia said that she was going to visit her grandmother", "Nadia said she was going to visit her grandmother", "Nadia said that she was going to visit her grandmother."] },
+        ];
+
         const generateQuestions = (count, type) => {
             if (type === 'REWRITE') {
                 return [...rewriteTemplates].sort(() => Math.random() - 0.5).slice(0, 10);
             }
-            
+            if (type === 'REWRITE_SENT') {
+                return [...rewriteSentencesTemplates].sort(() => Math.random() - 0.5).slice(0, 10);
+            }
+
             // Multiple Choice / TF questions based on Unit 6: The Power of Stories Grammar (Reported Speech)
             const templates = [
                 { text: "She said that she _____ tired.", ans: "was", wrong: ["is", "were", "has been"] },
@@ -736,9 +756,10 @@
             let type = 'MCQ';
             if (gameId === 4) type = 'TF';
             if (gameId === 5) type = 'REWRITE';
-            
+            if (gameId === 6) type = 'REWRITE_SENT';
+
             // Generate 25 questions for MCQ/TF/Games, 10 for Rewrite
-            let qCount = (gameId === 5) ? 10 : 25;
+            let qCount = (gameId === 5 || gameId === 6) ? 10 : 25;
             currentQuestionsList = generateQuestions(qCount, type);
             totalQuestions = currentQuestionsList.length;
             totalQSpan.innerText = totalQuestions;
@@ -782,18 +803,25 @@
             } else if (currentGameId === 3) {
                 targetsArea.style.display = 'block';
                 startTargetsGame(qData);
-            } else if (currentGameId === 5) {
+            } else if (currentGameId === 5 || currentGameId === 6) {
                 rewriteArea.style.display = 'block';
-                rewriteBracket.innerText = `${qData.q}`;
-                qContainer.style.display = 'none'; // Hide main question text for rewrite
+                const instructionEl = document.getElementById('rewrite-instruction-text');
+                if (currentGameId === 5) {
+                    rewriteBracket.innerText = `${qData.q}`;
+                    qContainer.style.display = 'none'; // Hide main question text for rewrite
+                    instructionEl.innerText = 'Rewrite the sentence correcting the word(s) in brackets:';
+                } else {
+                    rewriteBracket.innerText = `(${qData.bracket})`;
+                    instructionEl.innerText = 'Rewrite the sentence using the word in brackets:';
+                }
                 rewriteInput.value = '';
                 rewriteInput.disabled = false;
                 rewriteInput.style.borderColor = "#cbd5e1";
-                
+
                 const submitBtn = document.getElementById('btn-submit-rewrite');
                 submitBtn.disabled = false;
                 submitBtn.style.display = 'inline-block';
-                
+
                 document.getElementById('btn-next-rewrite').style.display = 'none';
                 document.getElementById('rewrite-feedback').innerHTML = '';
                 setTimeout(() => rewriteInput.focus(), 100);
@@ -839,7 +867,7 @@
                 playSound('wrong');
                 showFeedbackIcon(false);
                 mistakes.push({
-                    q: qData.q,
+                    q: (currentGameId === 6) ? `${qData.q} (${qData.bracket})` : qData.q,
                     correct: correctAnsStr
                 });
                 feedbackDiv.innerHTML = `<span style="color: var(--danger);"><i class="fas fa-times"></i> Answer: ${correctAnsStr}</span>`;
